@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Мой магазин в Telegram</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            text-align: center;
+            padding: 20px;
+            margin: 0;
+            min-height: 100vh;
+        }
+        
+        .container {
+            max-width: 500px;
+            margin: 0 auto;
+            background: rgba(255,255,255,0.1);
+            backdrop-filter: blur(10px);
+            padding: 20px;
+            border-radius: 20px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+        }
+        
+        h1 {
+            margin-bottom: 20px;
+        }
+        
+        .product {
+            background: rgba(255,255,255,0.15);
+            padding: 15px;
+            margin: 15px 0;
+            border-radius: 15px;
+            text-align: left;
+        }
+        
+        .price {
+            color: #4ade80;
+            font-size: 24px;
+            font-weight: bold;
+            margin: 10px 0;
+        }
+        
+        button {
+            background: #4ade80;
+            color: white;
+            border: none;
+            padding: 12px 25px;
+            border-radius: 10px;
+            font-size: 16px;
+            cursor: pointer;
+            width: 100%;
+            margin: 5px 0;
+        }
+        
+        .buy-btn {
+            background: #3b82f6;
+        }
+        
+        .close-btn {
+            background: #ef4444;
+        }
+        
+        .cart {
+            background: rgba(255,255,255,0.2);
+            padding: 15px;
+            border-radius: 15px;
+            margin: 20px 0;
+        }
+    </style>
+    <script src="https://telegram.org/js/telegram-web-app.js?1"></script>
+</head>
+<body>
+    <div class="container">
+        <h1>🛍️ Мой магазин</h1>
+        <p>Добро пожаловать в Telegram Mini App!</p>
+        
+        <div class="product">
+            <h3>🎧 Беспроводные наушники</h3>
+            <p>Отличное качество звука, 20 часов работы</p>
+            <div class="price">2 999 ₽</div>
+            <button class="buy-btn" onclick="buyProduct('Наушники', 2999)">Добавить в корзину</button>
+        </div>
+        
+        <div class="product">
+            <h3>📱 Чехол для телефона</h3>
+            <p>Защитный, стильный, разные цвета</p>
+            <div class="price">799 ₽</div>
+            <button class="buy-btn" onclick="buyProduct('Чехол для телефона', 799)">Добавить в корзину</button>
+        </div>
+        
+        <div class="product">
+            <h3>⚡ Power Bank 10000 mAh</h3>
+            <p>Быстрая зарядка, компактный</p>
+            <div class="price">1 999 ₽</div>
+            <button class="buy-btn" onclick="buyProduct('Power Bank', 1999)">Добавить в корзину</button>
+        </div>
+        
+        <div class="cart">
+            <h3>🛒 Корзина</h3>
+            <div id="cart">Товаров: 0</div>
+            <div id="total">Сумма: 0 ₽</div>
+            <button onclick="checkout()">Оформить заказ</button>
+        </div>
+        
+        <button onclick="closeApp()" class="close-btn">Закрыть приложение</button>
+        
+        <p style="margin-top: 30px; font-size: 12px; opacity: 0.7;">
+            Открыто в Telegram Mini App
+        </p>
+    </div>
+    
+    <script>
+        // Telegram Mini App инициализация
+        const tg = window.Telegram.WebApp;
+        tg.ready();
+        tg.expand(); // Открыть на весь экран
+        
+        let cart = [];
+        let total = 0;
+        
+        // Функция добавления в корзину
+        function buyProduct(name, price) {
+            cart.push({name, price});
+            total += price;
+            
+            // Обновляем отображение
+            document.getElementById('cart').textContent = `Товаров: ${cart.length}`;
+            document.getElementById('total').textContent = `Сумма: ${total} ₽`;
+            
+            // Показываем уведомление в Telegram
+            tg.showPopup({
+                title: 'Товар добавлен!',
+                message: `${name} за ${price} ₽ добавлен в корзину`,
+                buttons: [{type: 'ok'}]
+            });
+        }
+        
+        // Оформление заказа
+        function checkout() {
+            if (cart.length === 0) {
+                tg.showAlert('Корзина пуста!');
+                return;
+            }
+            
+            tg.showPopup({
+                title: 'Оформление заказа',
+                message: `Заказ на сумму ${total} ₽\nТоваров: ${cart.length}\n\nПодтвердить заказ?`,
+                buttons: [
+                    {id: 'yes', type: 'default', text: '✅ Да'},
+                    {id: 'no', type: 'destructive', text: '❌ Нет'}
+                ]
+            }, function(buttonId) {
+                if (buttonId === 'yes') {
+                    tg.showAlert('✅ Заказ оформлен!\nМы свяжемся с вами для уточнения деталей.');
+                    cart = [];
+                    total = 0;
+                    document.getElementById('cart').textContent = 'Товаров: 0';
+                    document.getElementById('total').textContent = 'Сумма: 0 ₽';
+                }
+            });
+        }
+        
+        // Закрыть приложение
+        function closeApp() {
+            tg.close();
+        }
+        
+        // Показать данные пользователя при загрузке
+        document.addEventListener('DOMContentLoaded', function() {
+            const user = tg.initDataUnsafe.user;
+            if (user) {
+                console.log('Пользователь:', user.first_name, user.id);
+            }
+        });
+    </script>
+</body>
+</html>
